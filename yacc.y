@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* The grammar in the file below might be expressed more elegantly and thus enable parsing of the code without ugly hacks. If you want to help, write to ashutoshmohan@gmail.com*/
+/* The grammar in the file below might be expressed more elegantly. If you want to help, please write to ashutoshmohan@gmail.com*/
 
 %{
 	#include<string.h>
