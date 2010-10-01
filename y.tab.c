@@ -67,30 +67,57 @@
       know about them.  */
    enum yytokentype {
      COORDINATE_PLUS_DIAM = 258,
-     NEURITE = 259,
-     CELLBODY = 260,
-     LEFTPAREN = 261,
-     RIGHTPAREN = 262,
-     NEXTBRANCH = 263
+     APICAL = 259,
+     AXON = 260,
+     DENDRITE = 261,
+     CELLBODY = 262,
+     LEFTPAREN = 263,
+     RIGHTPAREN = 264,
+     NEXTBRANCH = 265
    };
 #endif
 /* Tokens.  */
 #define COORDINATE_PLUS_DIAM 258
-#define NEURITE 259
-#define CELLBODY 260
-#define LEFTPAREN 261
-#define RIGHTPAREN 262
-#define NEXTBRANCH 263
+#define APICAL 259
+#define AXON 260
+#define DENDRITE 261
+#define CELLBODY 262
+#define LEFTPAREN 263
+#define RIGHTPAREN 264
+#define NEXTBRANCH 265
 
 
 
 
 /* Copy the first part of user declarations.  */
-#line 19 "yacc.y"
+#line 20 "yacc.y"
 
+	#include<string.h>
 	#include<stdio.h>
-	int yylex(void);
+	
+	//Dependent on corresponding lex definition
+	#define YYSTYPE char*
+	YYSTYPE yySharedCoordinate;
+
+	//variables and definitions used for processing in this file
+	FILE* yyout;
+	int yyCurrentlyAccessed;
+	int yyDendriteSectionCount = 0;
+	int yyLastDendBifurcationIndex = 0;
+	int yyApicalSectionCount = 0;
+	int yyAxonSectionCount = 0;
+	int yyCellBodyCount = 0;
+	int lastToken = CELLBODY; //this is in many ways a hack. I should change grammar to remove the need to have this in here. The change in grammar should differentiate labels and coordinates, they've been clumped as primary at the moment.
+	
+	//function declarations.
+	int yylex(void); //refers to the function in lex. The init() function in turn is called by lex.
 	void yyerror(char*);
+	void yyAdd3dPoint(char*);	
+	void yyNewCellBodyContour();
+	void yyNewDendrite();
+	void yyNewDendriteBranch();
+	void yyNewAxon();
+
 
 
 /* Enabling traces.  */
@@ -124,7 +151,7 @@ typedef int YYSTYPE;
 
 
 /* Line 216 of yacc.c.  */
-#line 128 "y.tab.c"
+#line 155 "y.tab.c"
 
 #ifdef short
 # undef short
@@ -339,20 +366,20 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  6
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   16
+#define YYLAST   20
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  9
+#define YYNTOKENS  11
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  5
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  11
+#define YYNRULES  13
 /* YYNRULES -- Number of states.  */
-#define YYNSTATES  18
+#define YYNSTATES  20
 
 /* YYTRANSLATE(YYLEX) -- Bison symbol number corresponding to YYLEX.  */
 #define YYUNDEFTOK  2
-#define YYMAXUTOK   263
+#define YYMAXUTOK   265
 
 #define YYTRANSLATE(YYX)						\
   ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
@@ -386,7 +413,7 @@ static const yytype_uint8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
-       5,     6,     7,     8
+       5,     6,     7,     8,     9,    10
 };
 
 #if YYDEBUG
@@ -394,24 +421,24 @@ static const yytype_uint8 yytranslate[] =
    YYRHS.  */
 static const yytype_uint8 yyprhs[] =
 {
-       0,     0,     3,     6,     8,    11,    15,    19,    22,    26,
-      28,    30
+       0,     0,     3,     6,    10,    14,    17,    19,    22,    26,
+      28,    30,    32,    34
 };
 
 /* YYRHS -- A `-1'-separated list of the rules' RHS.  */
 static const yytype_int8 yyrhs[] =
 {
-      10,     0,    -1,     6,    11,    -1,    12,    -1,    11,    12,
-      -1,    11,     6,    12,    -1,    11,     8,    12,    -1,    11,
-       7,    -1,     6,    13,     7,    -1,     3,    -1,     5,    -1,
-       4,    -1
+      12,     0,    -1,     8,    13,    -1,    13,     8,    14,    -1,
+      13,    10,    14,    -1,    13,     9,    -1,    14,    -1,    13,
+      14,    -1,     8,    15,     9,    -1,     3,    -1,     7,    -1,
+       4,    -1,     6,    -1,     5,    -1
 };
 
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    33,    33,    36,    37,    38,    39,    40,    42,    44,
-      45,    46
+       0,    59,    59,    62,    63,    64,    65,    66,    69,    72,
+      73,    74,    75,    76
 };
 #endif
 
@@ -420,9 +447,9 @@ static const yytype_uint8 yyrline[] =
    First, the terminals, then, starting at YYNTOKENS, nonterminals.  */
 static const char *const yytname[] =
 {
-  "$end", "error", "$undefined", "COORDINATE_PLUS_DIAM", "NEURITE",
-  "CELLBODY", "LEFTPAREN", "RIGHTPAREN", "NEXTBRANCH", "$accept", "file",
-  "tree", "coordinate", "primary", 0
+  "$end", "error", "$undefined", "COORDINATE_PLUS_DIAM", "APICAL", "AXON",
+  "DENDRITE", "CELLBODY", "LEFTPAREN", "RIGHTPAREN", "NEXTBRANCH",
+  "$accept", "file", "tree", "coordinate", "primary", 0
 };
 #endif
 
@@ -431,22 +458,23 @@ static const char *const yytname[] =
    token YYLEX-NUM.  */
 static const yytype_uint16 yytoknum[] =
 {
-       0,   256,   257,   258,   259,   260,   261,   262,   263
+       0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
+     265
 };
 # endif
 
 /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_uint8 yyr1[] =
 {
-       0,     9,    10,    11,    11,    11,    11,    11,    12,    13,
-      13,    13
+       0,    11,    12,    13,    13,    13,    13,    13,    14,    15,
+      15,    15,    15,    15
 };
 
 /* YYR2[YYN] -- Number of symbols composing right hand side of rule YYN.  */
 static const yytype_uint8 yyr2[] =
 {
-       0,     2,     2,     1,     2,     3,     3,     2,     3,     1,
-       1,     1
+       0,     2,     2,     3,     3,     2,     1,     2,     3,     1,
+       1,     1,     1,     1
 };
 
 /* YYDEFACT[STATE-NAME] -- Default rule to reduce with in state
@@ -454,14 +482,14 @@ static const yytype_uint8 yyr2[] =
    means the default is an error.  */
 static const yytype_uint8 yydefact[] =
 {
-       0,     0,     0,     0,     2,     3,     1,     9,    11,    10,
-       0,     0,     7,     0,     4,     8,     5,     6
+       0,     0,     0,     0,     2,     6,     1,     9,    11,    13,
+      12,    10,     0,     0,     5,     0,     7,     8,     3,     4
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-      -1,     2,     4,     5,    10
+      -1,     2,     4,     5,    12
 };
 
 /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
@@ -469,8 +497,8 @@ static const yytype_int8 yydefgoto[] =
 #define YYPACT_NINF -5
 static const yytype_int8 yypact[] =
 {
-      -1,     0,    13,     7,     8,    -5,    -5,    -5,    -5,    -5,
-       1,    -2,    -5,     0,    -5,    -5,    -5,    -5
+      -1,     0,    17,     9,    10,    -5,    -5,    -5,    -5,    -5,
+      -5,    -5,     1,    -2,    -5,     0,    -5,    -5,    -5,    -5
 };
 
 /* YYPGOTO[NTERM-NUM].  */
@@ -486,22 +514,24 @@ static const yytype_int8 yypgoto[] =
 #define YYTABLE_NINF -1
 static const yytype_uint8 yytable[] =
 {
-      14,     7,     8,     9,     3,     1,     3,    16,    15,    17,
-       7,     8,     9,     6,    11,    12,    13
+      16,     7,     8,     9,    10,    11,     3,     1,     3,    18,
+      17,    19,     7,     8,     9,    10,    11,     6,    13,    14,
+      15
 };
 
 static const yytype_uint8 yycheck[] =
 {
-       4,     3,     4,     5,     6,     6,     6,    11,     7,    13,
-       3,     4,     5,     0,     6,     7,     8
+       4,     3,     4,     5,     6,     7,     8,     8,     8,    13,
+       9,    15,     3,     4,     5,     6,     7,     0,     8,     9,
+      10
 };
 
 /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
    symbol of state STATE-NUM.  */
 static const yytype_uint8 yystos[] =
 {
-       0,     6,    10,     6,    11,    12,     0,     3,     4,     5,
-      13,     6,     7,     8,    12,     7,    12,    12
+       0,     8,    12,     8,    13,    14,     0,     3,     4,     5,
+       6,     7,    15,     8,     9,    10,    14,     9,    14,    14
 };
 
 #define yyerrok		(yyerrstatus = 0)
@@ -1316,58 +1346,68 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 33 "yacc.y"
-    { printf("Case 0.5");(yyval) = (yyvsp[(1) - (2)]) ;}
+#line 59 "yacc.y"
+    { ;}
     break;
 
   case 3:
-#line 36 "yacc.y"
-    { printf("\t Case 0.2 - New point");(yyval) = (yyvsp[(1) - (1)]) ;}
+#line 62 "yacc.y"
+    {if(lastToken == COORDINATE_PLUS_DIAM) { yyLastDendBifurcationIndex = yyDendriteSectionCount; ++yyDendriteSectionCount; yyNewDendriteBranch();yyAdd3dPoint(yySharedCoordinate) ;}}
     break;
 
   case 4:
-#line 37 "yacc.y"
-    { printf("\t Case 0.3 - New point");(yyval) = (yyvsp[(1) - (2)]) ;}
+#line 63 "yacc.y"
+    {if(lastToken == COORDINATE_PLUS_DIAM) {++yyDendriteSectionCount; yyNewDendriteBranch();yyAdd3dPoint(yySharedCoordinate) ;}}
     break;
 
   case 5:
-#line 38 "yacc.y"
-    { printf("\t Case 1.1 - New split");(yyval) = (yyvsp[(1) - (3)]) ;}
+#line 64 "yacc.y"
+    {;}
     break;
 
   case 6:
-#line 39 "yacc.y"
-    { printf("\tCase 1.2 - New sibling");(yyval) = (yyvsp[(1) - (3)]) ;}
+#line 65 "yacc.y"
+    { lastToken = COORDINATE_PLUS_DIAM; yyAdd3dPoint(yySharedCoordinate);}
     break;
 
   case 7:
-#line 40 "yacc.y"
-    { printf("\tCase 1.3 - Ending");(yyval) = (yyvsp[(1) - (2)]) ;}
+#line 66 "yacc.y"
+    {lastToken = COORDINATE_PLUS_DIAM; yyAdd3dPoint(yySharedCoordinate) ;}
     break;
 
   case 8:
-#line 42 "yacc.y"
-    { printf("\t");(yyval) = (yyvsp[(1) - (3)]) ;}
+#line 69 "yacc.y"
+    { ;}
     break;
 
   case 9:
-#line 44 "yacc.y"
-    { printf("(PNT)");(yyval) = (yyvsp[(1) - (1)]) ;}
+#line 72 "yacc.y"
+    { ;}
     break;
 
   case 10:
-#line 45 "yacc.y"
-    { printf("(CB)");(yyval) = (yyvsp[(1) - (1)]) ;}
+#line 73 "yacc.y"
+    { lastToken = CELLBODY; yyCurrentlyAccessed = CELLBODY; ++yyCellBodyCount; yyNewCellBodyContour();}
     break;
 
   case 11:
-#line 46 "yacc.y"
-    { printf("(NEU)");(yyval) = (yyvsp[(1) - (1)]) ;}
+#line 74 "yacc.y"
+    { lastToken = APICAL; yyCurrentlyAccessed = APICAL;}
+    break;
+
+  case 12:
+#line 75 "yacc.y"
+    { lastToken = DENDRITE; yyCurrentlyAccessed = DENDRITE;++yyDendriteSectionCount; yyNewDendrite();}
+    break;
+
+  case 13:
+#line 76 "yacc.y"
+    { lastToken = AXON; yyCurrentlyAccessed = AXON;++yyAxonSectionCount;yyNewAxon();}
     break;
 
 
 /* Line 1267 of yacc.c.  */
-#line 1371 "y.tab.c"
+#line 1411 "y.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1581,12 +1621,95 @@ yyreturn:
 }
 
 
-#line 48 "yacc.y"
+#line 78 "yacc.y"
 
+
+void yyAdd3dPoint(char* coordinateAndDiam)
+{
+
+	char x[7],y[7],z[7],diam[7]; //each point can have 7 chars. 
+	char* temp;
+
+if(yyCurrentlyAccessed != CELLBODY)	{
+		fprintf(yyout,"h.pt3dadd(");
+		int i = 0;
+		for(i=0;i<4;i+=1)	{
+			if(i==0)	{
+				temp = (char*)strtok(coordinateAndDiam,"    ");
+				if(temp == NULL)	{
+					temp = (char*)strtok(coordinateAndDiam,"   ");
+				}
+			}
+			else	{
+				temp = (char*)strtok(NULL,"    ");
+				if(temp == NULL)	{
+					temp = (char*)strtok(coordinateAndDiam,"   ");
+				}
+			}
+			if(i<3)	{ // so we won't add a comma for the last number
+				fprintf(yyout,"%s,",temp);
+			}
+			else	{
+				fprintf(yyout,"%s",temp);
+			}
+		}
+		fprintf(yyout,"\n");
+	}
+
+	
+	
+
+
+}
+
+void yyNewCellBodyContour()	{
+//	fprintf(yyout,"soma = h.Section()")	;	
+	fprintf(yyout,"NEW SOMA CONTOUR\n");
+}
 
 void yyerror(char* s )	{
 	fprintf(stderr,"\n%s",s);
 }
 
-int init(int argc, char** argv) {
+void yyNewDendrite()	{
+	fprintf(yyout,"\n");
+	fprintf(yyout,"dendrites.append(h.Section())\n");
+	fprintf(yyout,"dendrites[%d].connect(soma)\n",yyDendriteSectionCount-1);
+	fprintf(yyout,"h.pop_section()\n");
+	fprintf(yyout,"dendrites[%d].push()\n",yyDendriteSectionCount-1);
+}
+
+void yyNewDendriteBranch()	{
+	//fseek(yyout,-(strlen(yySharedCoordinate)+1+1),SEEK_CUR); // the first 1 accounts for the terminating character, the second one accounts for the 10 chars in h.add3dpoint( but also subtracts the 9 characters gained by replacing 12 spaces with 3 commas
+	fprintf(yyout,"\n");
+	fprintf(yyout,"dendrites.append(h.Section())\n");
+	fprintf(yyout,"dendrites[%d].connect(dendrites[%d])\n",yyDendriteSectionCount-1,yyLastDendBifurcationIndex-1);
+	fprintf(yyout,"h.pop_section()\n");
+	fprintf(yyout,"dendrites[%d].push()\n",yyDendriteSectionCount-1);
+	//this line was created with a programming hack. If you have problems parsing this file, this MIGHT be a good place to look.
+//	fprintf(yyout,"h.addpt3d(%s\t\n",yySharedCoordinate);
+//	yyAdd3dPoint(yySharedCoordinate);
+}
+
+void yyNewAxon()	{
+	fprintf(yyout,"\n");
+	fprintf(yyout,"axons.append(h.Section())\n");
+	fprintf(yyout,"axons[%d].connect(soma)\n",yyAxonSectionCount-1);
+	fprintf(yyout,"h.pop_section()\n");
+	fprintf(yyout,"axons[%d].push()\n",yyAxonSectionCount-1);
+}
+
+int init(char* argv) {
+	
+	int outfileNameSize = strlen(argv)+3; //for appending .py
+	char* outfileName = (char*)malloc(outfileNameSize*sizeof(char));
+	strcpy(outfileName,argv);
+	strcat(outfileName,".py");
+	yyout = fopen(outfileName,"w");
+	fprintf(yyout,"from neuron import *\n");
+	fprintf(yyout,"from nrn import *\n");
+	fprintf(yyout,"dendrites = []\n");	
+	fprintf(yyout,"apicals = []\n");		
+	fprintf(yyout,"axons = []\n");	
+
 }

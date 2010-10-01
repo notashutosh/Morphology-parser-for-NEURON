@@ -40,20 +40,24 @@
       know about them.  */
    enum yytokentype {
      COORDINATE_PLUS_DIAM = 258,
-     NEURITE = 259,
-     CELLBODY = 260,
-     LEFTPAREN = 261,
-     RIGHTPAREN = 262,
-     NEXTBRANCH = 263
+     APICAL = 259,
+     AXON = 260,
+     DENDRITE = 261,
+     CELLBODY = 262,
+     LEFTPAREN = 263,
+     RIGHTPAREN = 264,
+     NEXTBRANCH = 265
    };
 #endif
 /* Tokens.  */
 #define COORDINATE_PLUS_DIAM 258
-#define NEURITE 259
-#define CELLBODY 260
-#define LEFTPAREN 261
-#define RIGHTPAREN 262
-#define NEXTBRANCH 263
+#define APICAL 259
+#define AXON 260
+#define DENDRITE 261
+#define CELLBODY 262
+#define LEFTPAREN 263
+#define RIGHTPAREN 264
+#define NEXTBRANCH 265
 
 
 

@@ -36,15 +36,11 @@ closeParen  [)]
 	
 	/* C DEFINITIONS */
 %{
-	int yyCellBodyCount;
-	int yyAxonCount;
-	int yyApicalCount;
-	int yyDendriteCount;
-	enum{DENDRITE=2,APICAL=3,AXON=4};
-	int yyCurrentAccess = 1;
-	int yyId; // can mean different things at different times. Mostly used to keep track of a change to a new section.
-	int yyLastId;
+
 	#include "y.tab.h"
+	#define YYSTYPE char*
+	extern YYSTYPE yySharedCoordinate;
+	
 %}
 
 
@@ -53,30 +49,25 @@ closeParen  [)]
 %%
 
 	/* Identifying cell body */
-(CellBody)	{printf("\n%s",yytext);return CELLBODY;}
+(CellBody)	{return CELLBODY;}
 	
 	/* Identifying axon */
-(Axon)	{printf("\n%s",yytext);return NEURITE;}
+(Axon)	{return AXON;}
 	
 	/* Identifying dendrite */
-(Dendrite)	{printf("\n%s",yytext);return NEURITE;}
+(Dendrite)	{return DENDRITE;}
 
 	/* Identifying dendrite */
-(Apical)	{printf("\n%s",yytext);return NEURITE;}
+(Apical)	{return APICAL;}
 	
 	/* Identifying coordinates + diameter for everything except the soma. See substitutions above to decipher. */
-{coordinateAndDiam}	{printf("\n%s",yytext);return COORDINATE_PLUS_DIAM;}
+{coordinateAndDiam}	{yySharedCoordinate = yytext;return COORDINATE_PLUS_DIAM;}
 
-	/* Identifying opening parenthesis */
-	/* Identifying cellbody hints */
-{digit},{space}{digit}	{yyCurrentAccess = CELLBODY; yyProcessHints(yytext);}
+	/* identifying (, ) and | */
 
-	/* Identifying dendrite hints */
-{digit},{space}(R)(.)*	{yyCurrentAccess = CELLBODY; yyProcessHints(yytext);}
-
-{openParen} {printf("\n%s",yytext);return LEFTPAREN;}
-{closeParen} {printf("\n%s",yytext);return RIGHTPAREN;}
-{nextBranch}	{printf("\n%s",yytext);return NEXTBRANCH;}
+{openParen} {return LEFTPAREN;}
+{closeParen} {return RIGHTPAREN;}
+{nextBranch}	{return NEXTBRANCH;}
 	
 	/* THE FOLLOWING HAS TO BE AFTER ALL OTHER PATTERNS. Otherwise the program might not be able to detect parenthesis and that's pretty much the end of it all. RIP. */
 	/* Things to ignore. It is alright if it is sometimes a subset of the following patterns because lex matches the longest string. In the future if need be, these will be moved down with the rest and handlers added. */
@@ -95,76 +86,6 @@ closeParen  [)]
 	/* HANDLER FUNCTIONS */
 %%
 
-int yyCreateNeurite()	{
-	switch(yyCurrentAccess)
-	{
-		case CELLBODY:
-			printf("\n soma.append(Section())");
-		break;
-		
-		case DENDRITE:
-			printf("\n dendrite.append(Section())");			
-		
-		break;
-		
-		case APICAL:
-			printf("\n apical.append(Section())");
-		break;
-		
-		case AXON:
-			printf("\n axon.append(Section())");
-		break;
-	}
-	
-	return 0;
-}
-
-int yyProcessPoint(char* yytext)	{
-	switch(yyCurrentAccess)
-	{
-		case CELLBODY:
-		//	printf("\n soma.append(Section())");
-		break;
-		
-		case DENDRITE:
-		//	printf("\n dendrite.append(Section())");			
-		
-		break;
-		
-		case APICAL:
-		//	printf("\n apical.append(Section())");
-		break;
-		
-		case AXON:
-		//	printf("\n axon.append(Section())");
-		break;
-	}
-	
-	return 0;
-}
-
-int yyProcessHints(char* yytext)	{
-	switch(yyCurrentAccess)	{
-
-	case CELLBODY:
-		//	printf("\n%s",yytext);
-		break;
-		
-		case DENDRITE:
-		//	printf("\n%s",yytext);
-		
-		break;
-		
-		case APICAL:
-		//	printf("\n%s",yytext);
-		break;
-		
-		case AXON:
-		//	printf("\n%s",yytext);
-		break;
-	}
-}
-
 	//Defaults to return 1 since this program is designed to parse only single files. Return value of '1' signifies end of processing. This is called once lex finishes reading the current file.
 int yywrap(void) {
 	return 1;
@@ -174,7 +95,7 @@ int yywrap(void) {
 int main(int argc, char** argv) {
 	
 	yyin = fopen(argv[1],"r");
-	init();
+	init(argv[1]);
 	yyparse();
 //	yylex();
 	fclose(yyin);
