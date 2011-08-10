@@ -3,9 +3,8 @@ from nrn import *
 dendrites = []
 apicals = []
 axons = []
-NEW SOMA CONTOUR
-NEW SOMA CONTOUR
-NEW SOMA CONTOUR
+
+soma = Section()
 
 axons.append(h.Section())
 axons[0].connect(soma)
